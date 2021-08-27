@@ -33,7 +33,9 @@ public final class Configuration {
 	private int postgre_port;
 	private String postgre_database;
 	private String postgre_table;
-		
+	
+	private int limit_copy_per_task;
+	
 	public static Path getPath(){
 		try{
 			File clientFile = Paths.get(

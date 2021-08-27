@@ -1,8 +1,10 @@
 package tc.yigit.m2p.sql;
 
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.concurrent.ExecutorService;
@@ -168,6 +170,75 @@ public class SQLServer {
 		
 	    this.con = null;
 	}	
+	
+	public boolean tableExists(String table){
+		if(table == null) return false;
+		
+		try{
+			DatabaseMetaData metadata = getConnection().getMetaData();
+			if(metadata == null) return false;
+			
+			ResultSet rs = metadata.getTables(null, null, table, null);
+			if(rs.next()){
+				return true;
+			}
+		}catch(Exception ex){
+			//ex.printStackTrace();
+		}
+		
+		return false;
+	}
+	
+	public void dataInsert(String table, String keys, String values){
+		update("INSERT INTO " + table + " (" + keys + ") VALUES (" + values + ")");
+	}
+	
+	public long getRowCount(String table){
+		long count = 0;
+		
+        PreparedStatement ps = null;
+        try{
+        	ps = prepare("SELECT COUNT(*) FROM " + table);            
+            ResultSet set = ps.executeQuery();
+            if(set.next()){
+            	count = set.getLong(1);
+            }
+        }catch(SQLException ex){
+            ex.printStackTrace();
+        }finally{
+            try{
+                ps.close();
+            }catch(SQLException ex){
+            	//ex.printStackTrace();
+            }
+        }
+        
+        return count;
+	}
+	
+	public void update(String command){
+		Statement ps = null;
+	    try{
+	    	ps = getConnection().createStatement();
+	    	ps.executeUpdate(command);
+	    }catch(SQLException ex){
+            ex.printStackTrace();
+        }finally{
+            try{
+            	ps.close();
+            }catch(SQLException ex){
+            	//ex.printStackTrace();
+            }
+        }
+	}
+	
+	public void tableDelete(String table){
+		update("DROP TABLE " + table + ";");
+	}
+	
+	public void tableReset(String table){
+		update("TRUNCATE TABLE " + table + ";");
+	}
 	
 	public Statement createStatement() throws SQLException {
 		return this.getConnection().createStatement();

@@ -30,7 +30,7 @@ public class Mysql2Postgre {
 				
 				CONFIGURATION.getMysql_username(),
 				CONFIGURATION.getMysql_password(),
-				CONFIGURATION.getPostgre_database()
+				CONFIGURATION.getMysql_database()
 		);
 		POSTGRE_SERVER = new SQLServer(
 				SQLType.POSTGRE,
@@ -53,6 +53,18 @@ public class Mysql2Postgre {
 		
 		Utils.log("All connections active.");
 		Converter.convert(CONFIGURATION.getMysql_table(), CONFIGURATION.getPostgre_table());
+	}
+	
+	public static SQLServer getSQLServer(){
+		return MYSQL_SERVER;
+	}
+	
+	public static SQLServer getPostgreServer(){
+		return POSTGRE_SERVER;
+	}
+	
+	public static Configuration getConfig(){
+		return CONFIGURATION;
 	}
 	
 }
