@@ -3,7 +3,7 @@ You can convert your MySQL tables (with datas) to your PostgreSQL server.
 
 Example config file:
 
-``
+```bash
 mysql_username: "root"
 mysql_host: "1.1.1.1"
 mysql_password: "123456"
@@ -19,4 +19,5 @@ postgre_database: "test"
 postgre_table: "news"
 
 limit_copy_per_task: 50000 
-``
+```
+
