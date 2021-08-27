@@ -3,6 +3,7 @@ package tc.yigit.m2p.sql;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -16,6 +17,7 @@ import tc.yigit.m2p.Mysql2Postgre;
 import tc.yigit.m2p.enums.TableType;
 import tc.yigit.m2p.utils.Utils;
 
+@SuppressWarnings("deprecation")
 public class Converter {
 	
 	private static long TOTAL_SIZE = 0;
@@ -27,7 +29,10 @@ public class Converter {
 				
 		Utils.log(prefix + "Table cheking...");
 		LinkedHashMap<String, String> columns = TableCreator.check(from, to);
+		
+		Utils.log(prefix + "Counts cheking...");
 		TOTAL_SIZE = Mysql2Postgre.getSQLServer().getRowCount(from);
+		Utils.log(prefix + "Counts in table: " + TOTAL_SIZE);
 		
 		Utils.log(prefix + "Convert checked.");
 		
@@ -43,15 +48,27 @@ public class Converter {
 		}
 	}
 	private static Integer copyData(String from, String to, Integer last_id, LinkedHashMap<String, String> columns){
-		SQLServer fromSQL = Mysql2Postgre.getSQLServer();
+		SQLServer fromSQL 	= Mysql2Postgre.getSQLServer();
+		SQLServer toSQL 	= Mysql2Postgre.getPostgreServer();
 		
 		final int limit = Mysql2Postgre.getConfig().getLimit_copy_per_task();
         int completed_limit = 0;
         
         int new_last_id = 0; 
-		
-		PreparedStatement ps = null;
+
+        PreparedStatement psBatch = null;
+		String keys 	= Joiner.on(", ").join(generateList(columns.size(), new LinkedList<>(columns.keySet())));
+		String values	= Joiner.on(", ").join(generateList(columns.size(), null));	
+
+    	String query = "INSERT INTO %table% (%keys%) VALUES (%values%)";
+    	query = query.replace("%table%", to);
+    	query = query.replace("%keys%", keys);
+    	query = query.replace("%values%", values);
+    	    	
+		PreparedStatement ps = null;	
         try{
+			toSQL.getConnection().setAutoCommit(true);
+			
             ResultSet set = null;            
             if(last_id == null){
             	ps = fromSQL.prepare("SELECT * FROM "+from+" ORDER BY id DESC LIMIT ?");
@@ -63,21 +80,25 @@ public class Converter {
             }
             
             set = ps.executeQuery();
+        	psBatch = toSQL.prepare(query);
             
             while(set.next()){
             	completed_limit++;
-            	
-            	try{
-            		writeData(set, to, columns);
-            	}catch(Throwable ex){
-            		ex.printStackTrace();
-            	}
+            	writeData(psBatch, set, columns);
+				new_last_id = set.getInt("id");
             }
+            
+            psBatch.executeBatch();
         }catch(SQLException ex){
             ex.printStackTrace();
         }finally{
             try{
                 ps.close();
+            }catch(SQLException ex){
+            	//ex.printStackTrace();
+            }
+            try{
+            	psBatch.close();
             }catch(SQLException ex){
             	//ex.printStackTrace();
             }
@@ -93,22 +114,8 @@ public class Converter {
         return new_last_id;
 	}
 	
-	private static boolean writeData(ResultSet set, String table, LinkedHashMap<String, String> columns){
-		String keys 	= Joiner.on(", ").join(generateList(columns.size(), new LinkedList<>(columns.keySet())));
-		String values	= Joiner.on(", ").join(generateList(columns.size(), null));
-		
-		SQLServer toSQL = Mysql2Postgre.getPostgreServer();
-		boolean isSaved = false;
-		
-        PreparedStatement ps = null;
+	private static void writeData(PreparedStatement ps, ResultSet set, LinkedHashMap<String, String> columns){
         try{
-        	String query = "INSERT INTO %table% (%keys%) VALUES (%values%)";
-        	query = query.replace("%table%", table);
-        	query = query.replace("%keys%", keys);
-        	query = query.replace("%values%", values);
-        	
-        	ps = toSQL.prepare(query);
-        	
         	int i = 1;
     		for(Entry<String, String> entry : columns.entrySet()){
     			String column = entry.getKey();
@@ -121,7 +128,11 @@ public class Converter {
     			}else if(type == TableType.STRING){
     				ps.setString(i, set.getString(column));
     			}else if(type == TableType.TIMESTAMP){
-    				ps.setTimestamp(i, set.getTimestamp(column));
+    				try{
+        				ps.setTimestamp(i, set.getTimestamp(column));   
+    				}catch(Throwable ex){
+    					ps.setTimestamp(i, new Timestamp(1970, 1, 1, 0, 0, 0, 0));
+    				} 				
     			}else{
     				ps.setObject(i, set.getObject(column));
     			}
@@ -129,21 +140,10 @@ public class Converter {
     			i++;
     		};
     		
-            int success = ps.executeUpdate();
-            if(success > 0){
-            	isSaved = true;
-            }
+    		ps.addBatch();
         }catch(SQLException ex){
             ex.printStackTrace();
-        }finally{
-            try{
-            	ps.close();
-            }catch(SQLException ex){
-            	//ex.printStackTrace();
-            }
         }
-        
-        return isSaved;
 	}
 	
 	private static List<String> generateList(int key, LinkedList<String> columns){
