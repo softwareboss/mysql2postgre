@@ -42,12 +42,15 @@ public class Converter {
 	}
 	
 	private static void copyDatas(String from, String to, LinkedHashMap<String, String> columns){
-		Integer last_id = null;
-		while((last_id = copyData(from, to, last_id, columns)) == null){
-			break;
+		int last_id = -1;
+		while(true){
+			last_id = copyData(from, to, last_id, columns);
+			if(last_id == -2){
+				break;
+			}
 		}
 	}
-	private static Integer copyData(String from, String to, Integer last_id, LinkedHashMap<String, String> columns){
+	private static int copyData(String from, String to, int last_id, LinkedHashMap<String, String> columns){
 		SQLServer fromSQL 	= Mysql2Postgre.getSQLServer();
 		SQLServer toSQL 	= Mysql2Postgre.getPostgreServer();
 		
@@ -70,12 +73,12 @@ public class Converter {
 			toSQL.getConnection().setAutoCommit(true);
 			
             ResultSet set = null;            
-            if(last_id == null){
+            if(last_id == -1){
             	ps = fromSQL.prepare("SELECT * FROM "+from+" ORDER BY id DESC LIMIT ?");
             	ps.setInt(1, limit);
             }else{
             	ps = fromSQL.prepare("SELECT * FROM "+from+" WHERE id < ? ORDER BY id DESC LIMIT ?");
-            	ps.setInt(1, last_id.intValue());
+            	ps.setInt(1, last_id);
             	ps.setInt(2, limit);
             }
             
@@ -108,7 +111,7 @@ public class Converter {
         Utils.log("Total row count: " + TOTAL_SIZE + " | " + " Copied row count: " + COPIED_SIZE);
         
         if(completed_limit < limit){
-        	return null;
+        	return -2;
         }
         
         return new_last_id;
