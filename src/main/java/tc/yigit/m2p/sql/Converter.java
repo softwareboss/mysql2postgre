@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map.Entry;
 
 import com.google.common.base.Joiner;
@@ -149,7 +150,7 @@ public class Converter {
 		List<String> keys = Lists.newArrayList();
 		
 		for(int i = 0; i < key; i++){
-			keys.add(columns != null ? "\"" + columns.get(i) + "\"" : "?");
+			keys.add(columns != null ? "\"" + columns.get(i).toLowerCase(Locale.ENGLISH) + "\"" : "?");
 		}
 		
 		return keys;
