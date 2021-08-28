@@ -1,7 +1,7 @@
 # mysql2postgre
 You can convert your MySQL tables (with datas) to your PostgreSQL server.
 
-Example config file:
+Example config file: (m2p.yml)
 
 ```bash
 mysql_username: "root"
