@@ -130,6 +130,8 @@ public class Converter {
     				ps.setLong(i, set.getLong(column));
     			}else if(type == TableType.STRING){
     				ps.setString(i, set.getString(column));
+    			}else if(type == TableType.BOOLEAN){
+    				ps.setBoolean(i, set.getBoolean(column));
     			}else if(type == TableType.TIMESTAMP){
     				try{
         				ps.setTimestamp(i, set.getTimestamp(column));   

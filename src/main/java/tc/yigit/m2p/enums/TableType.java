@@ -10,6 +10,7 @@ public enum TableType {
 	INTEGER			("java.lang.Integer", 		 "int4"),
 	STRING			("java.lang.String",		 "text"),
 	LONG			("java.lang.Long",			 "int8"),
+	BOOLEAN			("java.lang.Boolean",		 "bool"),
 	TIMESTAMP		("java.sql.Timestamp",		 "timestamp");
 	
 	private String className;
