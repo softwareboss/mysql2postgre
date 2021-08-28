@@ -15,12 +15,12 @@ import tc.yigit.m2p.utils.Utils;
 
 public class TableCreator {
 	
-	public static LinkedHashMap<String, String> check(String from, String to){
+	public static LinkedHashMap<String, TableType> check(String from, String to){
 		Utils.log("Table ("+from+") checking....");
 		
 		SQLServer toSQL = Mysql2Postgre.getPostgreServer();
 		
-		LinkedHashMap<String, String> columns = getColumns(from);
+		LinkedHashMap<String, TableType> columns = getColumns(from);
 		columns.entrySet().forEach(entry -> {
 			Utils.log("Column found: " + entry.getKey() + " (" + entry.getValue() + ")");
 		});
@@ -36,7 +36,7 @@ public class TableCreator {
 		return columns;
 	}
 	
-	private static void createTable(String table, LinkedHashMap<String, String> columns){
+	private static void createTable(String table, LinkedHashMap<String, TableType> columns){
 		String query = "CREATE TABLE "+table+" ( %lines% );";
 		
 		List<String> lines = Lists.newArrayList();
@@ -47,7 +47,7 @@ public class TableCreator {
 		
 		columns.entrySet().forEach(entry -> {
 			String column = entry.getKey();
-			TableType type = TableType.getTableType(entry.getValue());
+			TableType type = entry.getValue();
 			if(column.equals("id")) return;
 			
 			lines.add(column + " " + type.getColumnType() + " NULL,");
@@ -67,18 +67,23 @@ public class TableCreator {
 		Utils.log("Table created ["+table+"]");
 	}
 	
-	private static LinkedHashMap<String, String> getColumns(String table){
-		LinkedHashMap<String, String> columns = new LinkedHashMap<>();
+	private static LinkedHashMap<String, TableType> getColumns(String table){
+		LinkedHashMap<String, TableType> columns = new LinkedHashMap<>();
 		
 		Statement ps = null;
-		try{
+		try{	
 			ps = Mysql2Postgre.getSQLServer().createStatement();
 			ResultSet results = ps.executeQuery("SELECT * FROM " + table + " LIMIT 1");			
 			ResultSetMetaData metadata = results.getMetaData();
 			 
 			int columnCount = metadata.getColumnCount();
 			for(int i=1; i<=columnCount; i++){
-				columns.put(metadata.getColumnName(i), metadata.getColumnClassName(i));
+				TableType type = TableType.getTableType(metadata.getColumnType(i));
+				if(type == null){
+					Utils.log("[ERROR] We couldn't found type: " + metadata.getColumnType(i));
+					Utils.log("[ERROR] You can open an issue from github. Thanks!");
+				}
+				columns.put(metadata.getColumnName(i), type);
 			}
 		}catch(SQLException ex){
             ex.printStackTrace();

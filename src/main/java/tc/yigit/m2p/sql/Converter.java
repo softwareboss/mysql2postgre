@@ -28,7 +28,7 @@ public class Converter {
 		Utils.log(prefix + "Convert starting...");
 				
 		Utils.log(prefix + "Table cheking...");
-		LinkedHashMap<String, String> columns = TableCreator.check(from, to);
+		LinkedHashMap<String, TableType> columns = TableCreator.check(from, to);
 		
 		Utils.log(prefix + "Counts cheking...");
 		TOTAL_SIZE = Mysql2Postgre.getSQLServer().getRowCount(from);
@@ -41,7 +41,7 @@ public class Converter {
 		Utils.log(prefix + "Copying is completed.");
 	}
 	
-	private static void copyDatas(String from, String to, LinkedHashMap<String, String> columns){
+	private static void copyDatas(String from, String to, LinkedHashMap<String, TableType> columns){
 		int last_id = -1;
 		while(true){
 			last_id = copyData(from, to, last_id, columns);
@@ -50,7 +50,7 @@ public class Converter {
 			}
 		}
 	}
-	private static int copyData(String from, String to, int last_id, LinkedHashMap<String, String> columns){
+	private static int copyData(String from, String to, int last_id, LinkedHashMap<String, TableType> columns){
 		SQLServer fromSQL 	= Mysql2Postgre.getSQLServer();
 		SQLServer toSQL 	= Mysql2Postgre.getPostgreServer();
 		
@@ -117,22 +117,14 @@ public class Converter {
         return new_last_id;
 	}
 	
-	private static void writeData(PreparedStatement ps, ResultSet set, LinkedHashMap<String, String> columns){
+	private static void writeData(PreparedStatement ps, ResultSet set, LinkedHashMap<String, TableType> columns){
         try{
         	int i = 1;
-    		for(Entry<String, String> entry : columns.entrySet()){
+    		for(Entry<String, TableType> entry : columns.entrySet()){
     			String column = entry.getKey();
-    			TableType type = TableType.getTableType(entry.getValue());
+    			TableType type = entry.getValue();
     			
-    			if(type == TableType.INTEGER){
-    				ps.setInt(i, set.getInt(column));
-    			}else if(type == TableType.LONG){
-    				ps.setLong(i, set.getLong(column));
-    			}else if(type == TableType.STRING){
-    				ps.setString(i, set.getString(column));
-    			}else if(type == TableType.BOOLEAN){
-    				ps.setBoolean(i, set.getBoolean(column));
-    			}else if(type == TableType.TIMESTAMP){
+    			if(type == TableType.TIMESTAMP){
     				try{
         				ps.setTimestamp(i, set.getTimestamp(column));   
     				}catch(Throwable ex){
