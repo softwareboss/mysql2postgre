@@ -39,6 +39,12 @@ public class Converter {
 		Utils.log(prefix + "Copying data...");
 		copyDatas(from, to, columns);
 		Utils.log(prefix + "Copying is completed.");
+
+		if(columns.containsKey("id")){
+			Utils.log(prefix + "ID numbers fixing...");
+			Mysql2Postgre.getPostgreServer().update("SELECT setval('"+to+"_id_seq', "+(TOTAL_SIZE+1)+", true)");
+			Utils.log(prefix + "ID numbers fixed.");
+		}
 	}
 	
 	private static void copyDatas(String from, String to, LinkedHashMap<String, TableType> columns){
