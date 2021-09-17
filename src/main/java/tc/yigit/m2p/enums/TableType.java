@@ -23,10 +23,14 @@ public enum TableType {
 		this.ids = ids;
 		this.className = className;
 		this.columnType = columnType;
+
 	}
+
+	public static TableType[] values = values();
+
 	
 	public static TableType getTableType(int id){
-		return Arrays.asList(TableType.values()).stream().filter(table -> Arrays.asList(table.ids).contains(Integer.valueOf(id))).findFirst().orElse(null);		
+		return Arrays.asList(TableType.values).stream().filter(table -> Arrays.asList(table.ids).contains(Integer.valueOf(id))).findFirst().orElse(null);
 	}
 	
 }

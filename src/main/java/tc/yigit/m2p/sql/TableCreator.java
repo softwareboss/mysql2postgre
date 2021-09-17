@@ -57,10 +57,10 @@ public class TableCreator {
 			lines.add("CONSTRAINT "+table+"_pkey PRIMARY KEY (id)");
 		}
 		
-		StringBuilder lines_string = new StringBuilder();
-		lines.forEach(line -> lines_string.append(line));
+		StringBuilder linesString = new StringBuilder();
+		lines.forEach(line -> linesString.append(line));
 		
-		query = query.replace("%lines%", lines_string.toString());
+		query = query.replace("%lines%", linesString.toString());
 		
 		Mysql2Postgre.getPostgreServer().update(query);
 		
@@ -72,7 +72,7 @@ public class TableCreator {
 		
 		Statement ps = null;
 		try{	
-			ps = Mysql2Postgre.getSQLServer().createStatement();
+			ps = Mysql2Postgre.getMysqlServer().createStatement();
 			ResultSet results = ps.executeQuery("SELECT * FROM " + table + " LIMIT 1");			
 			ResultSetMetaData metadata = results.getMetaData();
 			 

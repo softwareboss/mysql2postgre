@@ -20,21 +20,21 @@ import tc.yigit.m2p.Mysql2Postgre;
 @Setter
 public final class Configuration {
 	
-	private String mysql_username;
-	private String mysql_host;
-	private String mysql_password;
-	private int mysql_port;
-	private String mysql_database;
-	private String mysql_table;
+	private String mysqlUsername;
+	private String mysqlHost;
+	private String mysqlPassword;
+	private int mysqlPort;
+	private String mysqlDatabase;
+	private String mysqlTable;
 
-	private String postgre_username;
-	private String postgre_host;
-	private String postgre_password;
-	private int postgre_port;
-	private String postgre_database;
-	private String postgre_table;
+	private String postgreUsername;
+	private String postgreHost;
+	private String postgrePassword;
+	private int postgrePort;
+	private String postgreDatabase;
+	private String postgreTable;
 	
-	private int limit_copy_per_task;
+	private int limitCopyPerTask;
 	
 	public static Path getPath(){
 		try{
@@ -53,7 +53,7 @@ public final class Configuration {
 		try{
 			Yaml yaml = new Yaml();		
 	        try(InputStream in = Files.newInputStream(Configuration.getPath())){
-	        	Mysql2Postgre.CONFIGURATION = yaml.loadAs(in, Configuration.class);
+				Mysql2Postgre.setConfiguration(yaml.loadAs(in,Configuration.class));
 	        }
 	        
 	        return true;

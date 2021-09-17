@@ -20,8 +20,8 @@ import tc.yigit.m2p.utils.Utils;
 @SuppressWarnings("deprecation")
 public class Converter {
 	
-	private static long TOTAL_SIZE = 0;
-	private static long COPIED_SIZE = 0;
+	private static long totalSize = 0;
+	private static long copiedSize = 0;
 	
 	public static void convert(String from, String to){
 		final String prefix = "SQL ["+from+"] <-TO-> POSTGRE ["+to+"] --> ";		
@@ -31,8 +31,8 @@ public class Converter {
 		LinkedHashMap<String, TableType> columns = TableCreator.check(from, to);
 		
 		Utils.log(prefix + "Counts cheking...");
-		TOTAL_SIZE = Mysql2Postgre.getSQLServer().getRowCount(from);
-		Utils.log(prefix + "Counts in table: " + TOTAL_SIZE);
+		totalSize = Mysql2Postgre.getMysqlServer().getRowCount(from);
+		Utils.log(prefix + "Counts in table: " + totalSize);
 		
 		Utils.log(prefix + "Convert checked.");
 		
@@ -42,7 +42,7 @@ public class Converter {
 
 		if(columns.containsKey("id")){
 			Utils.log(prefix + "ID numbers fixing...");
-			Mysql2Postgre.getPostgreServer().update("SELECT setval('"+to+"_id_seq', "+(TOTAL_SIZE+1)+", true)");
+			Mysql2Postgre.getPostgreServer().update("SELECT setval('"+to+"_id_seq', "+(totalSize +1)+", true)");
 			Utils.log(prefix + "ID numbers fixed.");
 		}
 	}
@@ -57,13 +57,13 @@ public class Converter {
 		}
 	}
 	private static int copyData(String from, String to, int last_id, LinkedHashMap<String, TableType> columns){
-		SQLServer fromSQL 	= Mysql2Postgre.getSQLServer();
+		SQLServer fromSQL 	= Mysql2Postgre.getMysqlServer();
 		SQLServer toSQL 	= Mysql2Postgre.getPostgreServer();
 		
-		final int limit = Mysql2Postgre.getConfig().getLimit_copy_per_task();
-        int completed_limit = 0;
+		final int limit = Mysql2Postgre.getConfiguration().getLimitCopyPerTask();
+        int completedLimit = 0;
         
-        int new_last_id = 0; 
+        int newLastId = 0;
 
         PreparedStatement psBatch = null;
 		String keys 	= Joiner.on(", ").join(generateList(columns.size(), new LinkedList<>(columns.keySet())));
@@ -92,9 +92,9 @@ public class Converter {
         	psBatch = toSQL.prepare(query);
             
             while(set.next()){
-            	completed_limit++;
+            	completedLimit++;
             	writeData(psBatch, set, columns);
-				new_last_id = set.getInt("id");
+				newLastId = set.getInt("id");
             }
             
             psBatch.executeBatch();
@@ -113,14 +113,14 @@ public class Converter {
             }
         }
         
-        COPIED_SIZE += completed_limit;
-        Utils.log("Total row count: " + TOTAL_SIZE + " | " + " Copied row count: " + COPIED_SIZE);
+        copiedSize += completedLimit;
+        Utils.log("Total row count: " + totalSize + " | " + " Copied row count: " + copiedSize);
         
-        if(completed_limit < limit){
+        if(completedLimit < limit){
         	return -2;
         }
         
-        return new_last_id;
+        return newLastId;
 	}
 	
 	private static void writeData(PreparedStatement ps, ResultSet set, LinkedHashMap<String, TableType> columns){

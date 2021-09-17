@@ -1,6 +1,8 @@
 package tc.yigit.m2p;
 
 
+import lombok.Getter;
+import lombok.Setter;
 import tc.yigit.m2p.config.Configuration;
 import tc.yigit.m2p.sql.Converter;
 import tc.yigit.m2p.sql.SQLServer;
@@ -10,10 +12,15 @@ import tc.yigit.m2p.utils.Utils;
 public class Mysql2Postgre {
 	
 	public static final String CONFIG_NAME = "m2p.yml";
-	public static Configuration CONFIGURATION;
-	
-	private static SQLServer MYSQL_SERVER;
-	private static SQLServer POSTGRE_SERVER;
+
+	@Getter
+	@Setter
+	private static Configuration configuration;
+
+	@Getter
+	private static SQLServer mysqlServer;
+	@Getter
+	private static SQLServer postgreServer;
 	
 	public static void main(String[] args){
 		if(!Configuration.loadConfiguration()){
@@ -22,49 +29,37 @@ public class Mysql2Postgre {
 		}
 		
 		Utils.log("Config loaded.");
-		
-		MYSQL_SERVER = new SQLServer(
+
+		mysqlServer = new SQLServer(
 				SQLType.MYSQL,
-				CONFIGURATION.getMysql_host(),
-				CONFIGURATION.getMysql_port(),
-				
-				CONFIGURATION.getMysql_username(),
-				CONFIGURATION.getMysql_password(),
-				CONFIGURATION.getMysql_database()
+				configuration.getMysqlHost(),
+				configuration.getMysqlPort(),
+
+				configuration.getMysqlUsername(),
+				configuration.getMysqlPassword(),
+				configuration.getMysqlDatabase()
 		);
-		POSTGRE_SERVER = new SQLServer(
+		postgreServer = new SQLServer(
 				SQLType.POSTGRE,
-				CONFIGURATION.getPostgre_host(),
-				CONFIGURATION.getPostgre_port(),
+				configuration.getPostgreHost(),
+				configuration.getPostgrePort(),
 				
-				CONFIGURATION.getPostgre_username(),
-				CONFIGURATION.getPostgre_password(),
-				CONFIGURATION.getPostgre_database()
+				configuration.getPostgreUsername(),
+				configuration.getPostgrePassword(),
+				configuration.getPostgreDatabase()
 		);
 		
-		if(!MYSQL_SERVER.isConnected()){
+		if(!mysqlServer.isConnected()){
 			Utils.log("MySQL connection failed.");			
 			return;
 		}
-		if(!POSTGRE_SERVER.isConnected()){
+		if(!postgreServer.isConnected()){
 			Utils.log("PostgreSQL connection failed.");			
 			return;
 		}
 		
 		Utils.log("All connections active.");
-		Converter.convert(CONFIGURATION.getMysql_table(), CONFIGURATION.getPostgre_table());
-	}
-	
-	public static SQLServer getSQLServer(){
-		return MYSQL_SERVER;
-	}
-	
-	public static SQLServer getPostgreServer(){
-		return POSTGRE_SERVER;
-	}
-	
-	public static Configuration getConfig(){
-		return CONFIGURATION;
+		Converter.convert(configuration.getMysqlTable(), configuration.getPostgreTable());
 	}
 	
 }

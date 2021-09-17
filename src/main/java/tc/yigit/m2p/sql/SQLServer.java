@@ -28,7 +28,7 @@ public class SQLServer {
     private Connection con;
 	private ScheduledExecutorService executor;
 	
-	public static enum SQLType {
+	public enum SQLType {
 		POSTGRE("postgresql", "org.postgresql.Driver"),
 		MYSQL("mysql", "com.mysql.jdbc.Driver");
 		
